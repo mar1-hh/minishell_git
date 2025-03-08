@@ -6,12 +6,12 @@
 /*   By: msaadaou <msaadaou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 17:15:31 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/03/08 22:49:30 by msaadaou         ###   ########.fr       */
+/*   Updated: 2025/03/08 23:19:40 by msaadaou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MINISHELL_H
-# define MINISHELL_
+# define MINISHELL_H
 
 typedef struct s_data
 {
@@ -27,5 +27,6 @@ typedef struct s_data
 # include <stdlib.h>
 # include <stdio.h>
 # include <fcntl.h>
+# include <unistd.h>
 
 #endif

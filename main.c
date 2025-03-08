@@ -6,7 +6,7 @@
 /*   By: msaadaou <msaadaou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 17:15:34 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/03/08 23:05:48 by msaadaou         ###   ########.fr       */
+/*   Updated: 2025/03/08 23:34:03 by msaadaou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ t_data	*create_node(char *cmd, char type, char **cmd_arg, char **env)
 	node->cmd = cmd;
 	node->cmd_args = cmd_arg;
 	node->type = type;
+	node->env = env;
 	node->left = NULL;
 	node->right = NULL;
 	return (node);
@@ -54,9 +55,10 @@ void	execute_tree(t_data *node, int fd, int outfd)
 	int		pipe_arr[2];
 	
 	if (!node)
-		return (NULL);
+		return ;
 	if (node->type == '|')
 	{
+		// printf("1337\n");
 		pipe(pipe_arr);
 		execute_tree(node->left, fd, pipe_arr[1]);
 		execute_tree(node->right, pipe_arr[0], -1);
@@ -64,13 +66,24 @@ void	execute_tree(t_data *node, int fd, int outfd)
 		close(pipe_arr[1]);
 	}
 	else if (node->cmd)
+	{
+		// printf("124\n");
 		command_pipe(node, fd, outfd);
+	}
 }
 
 
 int main(int ac, char **av, char **env)
 {
+	t_data	*root;
+	char *matr1[] = {"ls", NULL};
+	char *matr2[] = {"cat", NULL};
 
-	
+	root = create_node(NULL, '|', NULL, env);
+	root->left = create_node("/bin/ls", 'c', matr1, env);
+	root->right = create_node("/bin/cat", 'c', matr2, env);
+	execute_tree(root, 0, -1);
+	wait(NULL);
+	wait(NULL);
 	return (0);
 }

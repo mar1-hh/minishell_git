@@ -28,5 +28,6 @@ typedef struct s_data
 # include <stdio.h>
 # include <fcntl.h>
 # include <unistd.h>
-
+# include <sys/types.h>
+# include <sys/wait.h>
 #endif

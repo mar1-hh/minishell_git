@@ -146,13 +146,14 @@ void	get_env(t_list **lst, char **env)
 	}
 }
 
-void ft_env(t_list *lst)
+int ft_env(t_list *lst)
 {
 	while (lst)
 	{
 		printf("%s=%s\n", lst->name, lst->value);
 		lst = lst->next;
 	}
+	return (0);
 }
 
 void ft_export(t_list **lst, char *export_param)
@@ -203,31 +204,104 @@ void	rm_node(t_list *lst, char *str)
 	}
 }
 
-void	ft_unset(t_list **lst, char **argv)
+int	ft_unset(t_list **lst, char **argv)
 {
 	int	i;
 
-	i = 0;
+	i = 1;
 	while (argv[i])
 	{
 		rm_node(*lst, argv[i]);
 		i++;
 	}
+	return (0);
+}
+
+int	ft_pwd()
+{
+	char	*ptr;
+
+	ptr = getcwd(NULL, 0);
+	if (!ptr)
+	{
+		perror("pwd");
+		return (1);
+	}
+	printf("%s\n", ptr);
+	free(ptr);
+	return (0);
+}
+
+void	ft_cd(t_list *head, char *path)
+{
+	char	*old_pwd;
+	char	*pwd;
+
+	old_pwd = getcwd(NULL, 0);
+	if (chdir(path) == -1)
+	{
+		perror("cd");
+		free(old_pwd);
+		return ;
+	}
+	pwd = getcwd(NULL, 0);
+	while (head)
+	{
+		if (!ft_strncmp("OLDPWD", head->name, ft_strlen(head->name)))
+		{
+			free(head->value);
+			head->value = old_pwd;
+		}
+		else if (!ft_strncmp("PWD", head->name, ft_strlen(head->name)))
+		{
+			free(head->value);
+			head->value = pwd;
+		}
+		head = head->next;
+	}
+	return (0);
+}
+
+int ft_echo(char **args)
+{
+	int	i;
+	int	flag;
+
+	flag = 0;
+	i = 1;
+	if (!ft_strncmp(args[1], "-n", ft_strlen(args[1])))
+	{
+		flag = 1;
+		i++;
+	}
+	while (args[i])
+	{
+		if (i)
+			printf(" ");
+		printf("%s", args[i]);
+		i++;
+	}
+	if (!flag)
+		printf("\n");
+	return (0);
 }
 
 int	main(int ac, char **av, char **env)
 {
 	t_list	*head;
-	char *matr[] = {"MESSI", "OLDPWD", "PWD", NULL};
+	// char *matr[] = {"MESSI", "OLDPWD", "PWD", NULL};
 	(void)ac;
 	(void)av;
 	head = NULL;
 	get_env(&head, env);
-	ft_export(&head, "MESSI=\"the goat\"");
-	printf("\n");
+	// ft_export(&head, "MESSI=\"the goat\"");
+	// printf("\n");
+	// ft_env (head);
+	// printf("\n");
+	ft_cd(head, "..");
+	// ft_unset(&head, matr);
 	ft_env (head);
-	printf("\n");
-	ft_unset(&head, matr);
-	ft_env (head);
+	// ft_env (head);
+	// ft_pwd();
 	return (0);
 }

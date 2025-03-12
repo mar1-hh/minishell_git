@@ -6,128 +6,194 @@
 /*   By: msaadaou <msaadaou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 17:15:34 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/03/10 17:38:34 by msaadaou         ###   ########.fr       */
+/*   Updated: 2025/03/12 23:20:26 by msaadaou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../minishell.h"
 #include "pipex.h"
 
-// t_mshel	*create_node(char *cmd, char type, char **cmd_arg, char **env)
-// {
-// 	t_mshel	*node;
+t_mshel	*create_node(char *cmd, char type, char **cmd_arg, char **env)
+{
+	t_mshel	*node;
 
-// 	node = malloc(sizeof(t_mshel));
-// 	if (!node)
-// 		return (NULL);
-// 	node->cmd_args = cmd_arg;
-// 	node->type = type;
-// 	node->env = env;
-// 	node->left = NULL;
-// 	node->right = NULL;
-// 	return (node);
-// }
+	node = malloc(sizeof(t_mshel));
+	if (!node)
+		return (NULL);
+	node->cmd_args = cmd_arg;
+	node->type = type;
+	node->env = env;
+	node->left = NULL;
+	node->right = NULL;
+	return (node);
+}
 
-// void	open_herdoc(t_mshel *node)
-// {
-// 	int		new_in_fd;
-// 	char	*line;
+void	open_herdoc(t_mshel *node)
+{
+	int		new_in_fd;
+	char	*line;
 
-// 	new_in_fd = open("here_doc", O_CREAT | O_WRONLY | O_TRUNC, 0644);
-// 	// if (new_in_fd == -1)
-// 	// 	t_error("pipex: input", data, 1);
-// 	line = get_next_line(0);
-// 	line[ft_strlen(line) - 1] = 0;
-// 	while (ft_strcmp(node->lemiter, line))
-// 	{
-// 		line[ft_strlen(line)] = '\n';
-// 		write(new_in_fd, line, ft_strlen(line));
-// 		free(line);
-// 		line = get_next_line(0);
-// 		line[ft_strlen(line) - 1] = 0;
-// 	}
-// 	free(line);
-// 	close(new_in_fd);
-// }
+	new_in_fd = open("here_doc", O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	// if (new_in_fd == -1)
+	// 	t_error("pipex: input", data, 1);
+	line = get_next_line(0);
+	line[ft_strlen(line) - 1] = 0;
+	while (ft_strcmp(node->lemiter, line))
+	{
+		line[ft_strlen(line)] = '\n';
+		write(new_in_fd, line, ft_strlen(line));
+		free(line);
+		line = get_next_line(0);
+		line[ft_strlen(line) - 1] = 0;
+	}
+	free(line);
+	close(new_in_fd);
+}
 
-// int execute_command(t_mshel *node, int infd, int outfd, int cs)
-// {
-// 	int	pid;
-// 	int status;
+int	ft_strcmp(char *str1, char *str2)
+{
+	int	i;
 
-// 	pid = fork();
-// 	if (!pid)
-// 	{
-// 		close(cs);
-// 		if (node->in_redirect)
-// 		{
-// 			if (node->is_heredoc)
-// 				open_herdoc(node);
-// 			infd = open(node->in_redirect, O_RDONLY);
-// 			// if (infd == -1) mn ba3de
-// 		}
-// 		if (infd)
-// 		{
-// 			dup2(infd, 0);
-// 			close(infd);
-// 		}
-// 		if (node->out_redirect)
-// 		{
-// 			if (node->is_appaned)
-// 				outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_APPEND,
-// 0644);
-// 			else
-// 				outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_TRUNC,
-// 0644);
-// 		}
-// 		if (outfd != 1)
-// 		{
-// 			dup2(outfd, 1);
-// 			close(outfd);
-// 		}
-// 		char *d = debug_okda(node->env, node->cmd_args[0]);
+	i = 0;
+	while (str1[i] || str2[i])
+	{
+		if (str1[i] > str2[i])
+			return (1);
+		else if (str1[i] < str2[i])
+			return (-1);
+		i++;
+	}
+	return (0);
+}
 
-// 		execve(d, node->cmd_args, node->env);
-// 		exit(1);
-// 	}
-// 	if (!node->is_cmd_pipe)
-// 	{
-// 		waitpid(pid, &status, 0);
-// 		return (WEXITSTATUS(status));
-// 	}
-// }
+int	is_builtin(char *cmd)
+{
+	if (!ft_strcmp(cmd, "echo"))
+		return (1);
+	else if (!ft_strcmp(cmd, "cd"))
+		return (1);
+	else if (!ft_strcmp(cmd, "pwd"))
+		return (1);
+	else if (!ft_strcmp(cmd, "export"))
+		return (1);
+	else if (!ft_strcmp(cmd, "unset"))
+		return (1);
+	else if (!ft_strcmp(cmd, "env"))
+		return (1);
+	else if (!ft_strcmp(cmd, "exit"))
+		return (1);
+	return (0);
+}
 
-// int	execute_tree(t_mshel *node, int fd, int outfd, int closing_pipe)
-// {
-// 	int		pipe_arr[2];
-// 	int		status;
+int my_execve(t_mshel *node);
 
-// 	if (!node)
-// 		return (1);
-// 	if (ft_strncmp(node->type, "pipe", ft_strlen(node->type)))
-// 	{
-// 		pipe(pipe_arr);
-// 		execute_tree(node->left, fd, pipe_arr[1], pipe_arr[0]);
-// 		status = execute_tree(node->right, pipe_arr[0], outfd, pipe_arr[1]);
-// 		close(pipe_arr[0]);
-// 		close(pipe_arr[1]);
-// 	}
-// 	else if (ft_strncmp(node->type, "&&", ft_strlen(node->type)))
-// 	{
-// 		status = execute_tree(node->left, fd, outfd, closing_pipe);
-// 		if (!status)
-// 			execute_tree(node->right, fd, outfd, closing_pipe);
-// 	}
-// 	else if (ft_strncmp(node->type, "||", ft_strlen(node->type)))
-// 	{
-// 		status = execute_tree(node->left, fd, outfd, closing_pipe);
-// 		if (status)
-// 			execute_tree(node->right, fd, outfd, closing_pipe);
-// 	}
-// 	else if (ft_strncmp(node->type, "cmd", ft_strlen(node->type)))
-// 		return (execute_command(node, fd, outfd, closing_pipe));
-// 	return (status);
-// }
+int execute_builtin(t_mshel *node, int infd, int outfd)
+{
+	if (node->in_redirect)
+	{
+		if (node->is_heredoc)
+			open_herdoc(node);
+		infd = open(node->in_redirect, O_RDONLY);
+		// if (infd == -1) mn ba3de
+	}
+	if (infd)
+	{
+		dup2(infd, 0);
+		close(infd);
+	}
+	if (node->out_redirect)
+	{
+		if (node->is_appaned)
+			outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_APPEND, 0644);
+		else
+			outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	}
+	if (outfd != 1)
+	{
+		dup2(outfd, 1);
+		close(outfd);
+	}
+	my_execve(node);
+}
+
+int execute_command(t_mshel *node, int infd, int outfd, int cs)
+{
+	int	pid;
+	int status;
+	
+	if (is_builtin(node->cmd_args[0]))
+		execute_builtin(node, infd, outfd);
+	pid = fork();
+	if (!pid)
+	{
+		close(cs);
+		if (node->in_redirect)
+		{
+			if (node->is_heredoc)
+				open_herdoc(node);
+			infd = open(node->in_redirect, O_RDONLY);
+			// if (infd == -1) mn ba3de
+		}
+		if (infd)
+		{
+			dup2(infd, 0);
+			close(infd);
+		}
+		if (node->out_redirect)
+		{
+			if (node->is_appaned)
+				outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_APPEND, 0644);
+			else
+				outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+		}
+		if (outfd != 1)
+		{
+			dup2(outfd, 1);
+			close(outfd);
+		}
+		char *d = debug_okda(node->env, node->cmd_args[0]);
+
+		execve(d, node->cmd_args, node->env);
+		exit(1);
+	}
+	if (!node->is_cmd_pipe)
+	{
+		waitpid(pid, &status, 0);
+		return (WEXITSTATUS(status));
+	}
+}
+
+int	execute_tree(t_mshel *node, int fd, int outfd, int closing_pipe)
+{
+	int		pipe_arr[2];
+	int		status;
+
+	if (!node)
+		return (1);
+	if (ft_strncmp(node->type, "pipe", ft_strlen(node->type)))
+	{
+		pipe(pipe_arr);
+		execute_tree(node->left, fd, pipe_arr[1], pipe_arr[0]);
+		status = execute_tree(node->right, pipe_arr[0], outfd, pipe_arr[1]);
+		close(pipe_arr[0]);
+		close(pipe_arr[1]);
+	}
+	else if (ft_strncmp(node->type, "&&", ft_strlen(node->type)))
+	{
+		status = execute_tree(node->left, fd, outfd, closing_pipe);
+		if (!status)
+			status = execute_tree(node->right, fd, outfd, closing_pipe);
+	}
+	else if (ft_strncmp(node->type, "||", ft_strlen(node->type)))
+	{
+		status = execute_tree(node->left, fd, outfd, closing_pipe);
+		if (status)
+			status = execute_tree(node->right, fd, outfd, closing_pipe);
+	}
+	else if (ft_strncmp(node->type, "cmd", ft_strlen(node->type)))
+		return (execute_command(node, fd, outfd, closing_pipe));
+	return (status);
+}
 
 void	get_env(t_list **lst, char **env)
 {
@@ -156,7 +222,7 @@ int ft_env(t_list *lst)
 	return (0);
 }
 
-void ft_export(t_list **lst, char *export_param)
+int ft_export(t_list **lst, char *export_param)
 {
 	char	**mtr;
 	char	*value;
@@ -165,7 +231,7 @@ void ft_export(t_list **lst, char *export_param)
 	if (!export_param)
 	{
 		ft_env(*lst);
-		return ;
+		return (1);
 	}
 	//validation of mtr[0]
 	mtr = ft_split(export_param, '=');
@@ -178,11 +244,12 @@ void ft_export(t_list **lst, char *export_param)
 		{
 			free(temp->value);
 			temp->value = value;
-			return ;
+			return (0);
 		}
 		temp = temp->next;
 	}
 	ft_lstadd_back(lst, ft_lstnew(value, mtr[0]));
+	return (0);
 }
 
 void	rm_node(t_list *lst, char *str)
@@ -232,7 +299,7 @@ int	ft_pwd()
 	return (0);
 }
 
-void	ft_cd(t_list *head, char *path)
+int	ft_cd(t_list *head, char *path)
 {
 	char	*old_pwd;
 	char	*pwd;
@@ -242,7 +309,7 @@ void	ft_cd(t_list *head, char *path)
 	{
 		perror("cd");
 		free(old_pwd);
-		return ;
+		return 1;
 	}
 	pwd = getcwd(NULL, 0);
 	while (head)
@@ -284,6 +351,24 @@ int ft_echo(char **args)
 	if (!flag)
 		printf("\n");
 	return (0);
+}
+
+int my_execve(t_mshel *node)
+{
+	if (!ft_strcmp(node->cmd_args[0], "echo"))
+		return (ft_echo(node->cmd_args));
+	else if (!ft_strcmp(node->cmd_args[0], "cd"))
+		return (ft_cd(node->env_var, node->cmd_args[1]));
+	else if (!ft_strcmp(node->cmd_args[0], "pwd"))
+		return (ft_pwd());
+	else if (!ft_strcmp(node->cmd_args[0], "export"))
+		return (ft_export(node->env_var, node->cmd_args[1]));
+	else if (!ft_strcmp(node->cmd_args[0], "unset"))
+		return (ft_unset(node->env_var, node->cmd_args));
+	else if (!ft_strcmp(node->cmd_args[0], "env"))
+		return (ft_env(*(node->env_var)));
+	// else if (!ft_strcmp(node->cmd_args[0], "exit")) to do
+	// 	return (1);
 }
 
 int	main(int ac, char **av, char **env)

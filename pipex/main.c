@@ -6,7 +6,7 @@
 /*   By: msaadaou <msaadaou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 17:15:34 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/03/12 23:20:26 by msaadaou         ###   ########.fr       */
+/*   Updated: 2025/03/13 18:04:58 by msaadaou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ t_mshel	*create_node(char *cmd, char type, char **cmd_arg, char **env)
 	return (node);
 }
 
-void	open_herdoc(t_mshel *node)
+void	open_herdoc(t_redi *node)
 {
 	int		new_in_fd;
 	char	*line;
@@ -89,24 +89,11 @@ int my_execve(t_mshel *node);
 
 int execute_builtin(t_mshel *node, int infd, int outfd)
 {
-	if (node->in_redirect)
-	{
-		if (node->is_heredoc)
-			open_herdoc(node);
-		infd = open(node->in_redirect, O_RDONLY);
-		// if (infd == -1) mn ba3de
-	}
+	handle_redirection(node, &infd, &outfd);
 	if (infd)
 	{
 		dup2(infd, 0);
 		close(infd);
-	}
-	if (node->out_redirect)
-	{
-		if (node->is_appaned)
-			outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_APPEND, 0644);
-		else
-			outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 	}
 	if (outfd != 1)
 	{
@@ -114,6 +101,48 @@ int execute_builtin(t_mshel *node, int infd, int outfd)
 		close(outfd);
 	}
 	my_execve(node);
+}
+
+void	handle_redirection(t_mshel *node, int *infd, int *outfd)
+{
+	t_redi	*lst;
+
+	lst = node->lst;
+	while (lst)
+	{
+		if (!ft_strcmp(lst->type, "in"))
+		{
+			*infd = open(lst->redi_file, O_RDONLY);
+			if (infd == -1)
+			{
+				perror("open");
+				return ;
+			}
+		}
+		else if (!ft_strcmp(lst->type, "out"))
+		{
+			if (lst->is_app)
+				*outfd = open(lst->redi_file, O_CREAT | O_APPEND | O_WRONLY, 0644);
+			else
+				*outfd = open(lst->redi_file, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+			if (*outfd == -1)
+			{
+				perror("open");
+				return ;
+			}
+		}
+		else if (!ft_strcmp(lst->type, "out"))
+		{
+			open_herdoc(lst);
+			*infd = open(lst->redi_file, O_RDONLY);
+			if (*outfd == -1)
+			{
+				perror("open");
+				return ;
+			}
+		}
+		lst = lst->next;
+	}
 }
 
 int execute_command(t_mshel *node, int infd, int outfd, int cs)
@@ -127,24 +156,11 @@ int execute_command(t_mshel *node, int infd, int outfd, int cs)
 	if (!pid)
 	{
 		close(cs);
-		if (node->in_redirect)
-		{
-			if (node->is_heredoc)
-				open_herdoc(node);
-			infd = open(node->in_redirect, O_RDONLY);
-			// if (infd == -1) mn ba3de
-		}
+		handle_redirection(node, &infd, &outfd);
 		if (infd)
 		{
 			dup2(infd, 0);
 			close(infd);
-		}
-		if (node->out_redirect)
-		{
-			if (node->is_appaned)
-				outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_APPEND, 0644);
-			else
-				outfd = open(node->out_redirect, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 		}
 		if (outfd != 1)
 		{

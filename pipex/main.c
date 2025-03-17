@@ -6,7 +6,7 @@
 /*   By: msaadaou <msaadaou@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 17:15:34 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/03/13 18:04:58 by msaadaou         ###   ########.fr       */
+/*   Updated: 2025/03/15 17:25:17 by msaadaou         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -390,19 +390,6 @@ int my_execve(t_mshel *node)
 int	main(int ac, char **av, char **env)
 {
 	t_list	*head;
-	// char *matr[] = {"MESSI", "OLDPWD", "PWD", NULL};
-	(void)ac;
-	(void)av;
-	head = NULL;
-	get_env(&head, env);
-	// ft_export(&head, "MESSI=\"the goat\"");
-	// printf("\n");
-	// ft_env (head);
-	// printf("\n");
-	ft_cd(head, "..");
-	// ft_unset(&head, matr);
-	ft_env (head);
-	// ft_env (head);
-	// ft_pwd();
+	
 	return (0);
 }

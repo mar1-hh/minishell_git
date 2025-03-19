@@ -277,8 +277,7 @@ int execute_command(t_ast_node *node, int infd, int outfd, int cs, char **env)
 		execve(d, node->args, env);
 		exit(1);
 	}
-	// printf("%s %p %d\n", node->args[0], node->next, node->next->token->type);
-	if (!node->next || node->next->token->type == TOKEN_AND || node->next->token->type == TOKEN_OR)
+	if (!node->next || node->next->token->type != TOKEN_PIPE)
 		waitpid(pid, &status, 0);
     return (WEXITSTATUS(status));
 	return (1);

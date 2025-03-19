@@ -11,7 +11,7 @@ void print_ast(t_ast_node *node, int depth)
     for (i = 0; i < depth; i++)
         printf("  ");
     if (node->type == AST_CMD)
-        printf("CMD: %s\n", node->args[0]);
+        printf("CMD: %s %p\n", node->args[0], node->next);
     else if (node->type == AST_PIPE)
         printf("PIPE\n");
     else if (node->type == AST_AND)
@@ -253,13 +253,12 @@ char	*debug_okda(char **env, char *cmd)
 
 int execute_command(t_ast_node *node, int infd, int outfd, int cs, char **env)
 {
-	int	pid;
 	int status;
 	
 	// if (is_builtin(node->args[0]))
 	// 	execute_builtin(node, infd, outfd);
-	pid = fork();
-	if (!pid)
+	node->pid = fork();
+	if (!node->pid)
 	{
 		close(cs);
 		handle_redirection(node, &infd, &outfd);
@@ -274,13 +273,27 @@ int execute_command(t_ast_node *node, int infd, int outfd, int cs, char **env)
 			close(outfd);
 		}
 		char *d = debug_okda(env, node->args[0]);
+		// fprintf(stderr, "xi7aja\n");
 		execve(d, node->args, env);
 		exit(1);
 	}
-	if (!node->next || node->next->token->type != TOKEN_PIPE)
-		waitpid(pid, &status, 0);
-    return (WEXITSTATUS(status));
-	return (1);
+	if (node->is_wait)
+	{
+		waitpid(node->pid, &status, 0);
+    	return (WEXITSTATUS(status));
+	}
+	return (0);
+}
+
+void	ana_m9wd(t_ast_node *node)
+{
+	//ma kan7tajxe parting m9wd parting ki7tajni
+	if (!node->right)
+	{
+		node->is_wait = 1;
+		return ;
+	}
+	ana_m9wd(node->right);
 }
 
 int	execute_tree(t_ast_node *node, int fd, int outfd, int closing_pipe, char **env)
@@ -300,12 +313,14 @@ int	execute_tree(t_ast_node *node, int fd, int outfd, int closing_pipe, char **e
 	}
 	else if (node->type == AST_AND)
 	{
+		ana_m9wd(node->left);
 		status = execute_tree(node->left, fd, outfd, closing_pipe, env);
 		if (!status)
 			status = execute_tree(node->right, fd, outfd, closing_pipe, env);
 	}
 	else if (node->type == AST_OR)
 	{
+		ana_m9wd(node->left);
 		status = execute_tree(node->left, fd, outfd, closing_pipe, env);
 		if (status)
 			status = execute_tree(node->right, fd, outfd, closing_pipe, env);
@@ -330,9 +345,18 @@ int	execute_tree(t_ast_node *node, int fd, int outfd, int closing_pipe, char **e
 //     init_data(ast->right, 0);
 // }
 
-void waiting(t_ast_node *ast, int *counter)
+int waiting(t_ast_node *ast)
 {
-    while (wait(NULL) > 0);
+    int	status;
+	
+	if (!ast->right)
+	{
+		waitpid(ast->pid, &status, 0);
+		while (wait(NULL) > 0);
+    	return (WEXITSTATUS(status));
+	}
+	waiting(ast->right);
+	// wait(NULL);
 	// if (!ast)
     //     return ;
     // if(ast->next)
@@ -367,8 +391,9 @@ int main(int ac, char **av, char **env)
         tokens = tokens_list(args);
         stack = shuntin_yard(tokens);
         ast = make_tree(stack);
+		// print_ast(ast, 0);
         execute_tree(ast, 0, 1, -1, env);
-        waiting(ast, &counter);
+        waiting(ast);
     }
     return 0;
 }

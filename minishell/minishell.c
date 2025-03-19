@@ -277,7 +277,8 @@ int execute_command(t_ast_node *node, int infd, int outfd, int cs, char **env)
 		execve(d, node->args, env);
 		exit(1);
 	}
-	if (!node->next || node->next->token->type != TOKEN_PIPE)
+	// printf("%s %p %d\n", node->args[0], node->next, node->next->token->type);
+	if (!node->next || node->next->token->type == TOKEN_AND || node->next->token->type == TOKEN_OR)
 		waitpid(pid, &status, 0);
     return (WEXITSTATUS(status));
 	return (1);
@@ -332,15 +333,16 @@ int	execute_tree(t_ast_node *node, int fd, int outfd, int closing_pipe, char **e
 
 void waiting(t_ast_node *ast, int *counter)
 {
-    if (!ast)
-        return ;
-    if(ast->next)
-	{    if (ast->type == AST_CMD && ast->next->token->type == TOKEN_PIPE)
-        	wait(NULL);
-	}
-	// wait(NULL);
-    waiting(ast->left, counter);
-    waiting(ast->right, counter);
+    while (wait(NULL) > 0);
+	// if (!ast)
+    //     return ;
+    // if(ast->next)
+	// {    if (ast->type == AST_CMD && ast->next->token->type == TOKEN_PIPE)
+    //     	wait(NULL);
+	// }
+	// // wait(NULL);
+    // waiting(ast->left, counter);
+    // waiting(ast->right, counter);
 }
 
 int main(int ac, char **av, char **env)

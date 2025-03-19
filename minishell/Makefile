@@ -7,14 +7,19 @@ TARGET = minishell
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CC) -o $(TARGET) $(OBJS) $(LIBS)
+$(TARGET): $(OBJS) libft/libft.a
+	$(CC) -o $(TARGET) $(OBJS) $(LIBS) -Llibft -lft
+
+libft/libft.a:
+	$(MAKE) -C libft
 
 clean:
 	rm -f $(OBJS)
+	$(MAKE) -C libft clean
 
 fclean: clean
 	rm -f $(TARGET)
+	$(MAKE) -C libft fclean
 
 re: fclean all
 

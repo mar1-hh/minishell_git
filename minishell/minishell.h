@@ -9,7 +9,8 @@
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-
+#include <sys/types.h>
+       #include <sys/wait.h>
 typedef struct s_redirection {
 	char    *file;            // Filename (for >, <, etc.)
 	int     type;             // Type (REDIR_IN, REDIR_OUT, HEREDOC, etc.)

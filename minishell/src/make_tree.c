@@ -71,6 +71,7 @@ static t_ast_node *create_node(t_stack *stack, int flag)
     }
     node->next = stack->next;
     node->is_wait = 0;
+    node->ar_pipe = NULL;
     node->left = NULL;
     node->right = NULL;
     return node;

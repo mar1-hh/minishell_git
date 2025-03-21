@@ -62,7 +62,7 @@ typedef struct s_ast_node {
 	struct s_ast_node *left;
 	struct s_ast_node *right;
 	int		pid;
-	// For AST_CMD:
+	int		*ar_pipe;
 	char            **args;
 	char			**env;
 	t_stack			*next;

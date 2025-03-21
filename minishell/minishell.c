@@ -261,6 +261,7 @@ int execute_command(t_ast_node *node, int infd, int outfd, int cs, char **env)
 	if (!node->pid)
 	{
 		close(cs);
+
 		handle_redirection(node, &infd, &outfd);
 		if (infd)
 		{
@@ -279,6 +280,13 @@ int execute_command(t_ast_node *node, int infd, int outfd, int cs, char **env)
 	}
 	if (node->is_wait)
 	{
+		if (node->ar_pipe)
+		{
+			close(node->ar_pipe[0]);
+			close(node->ar_pipe[1]);
+			free(node->ar_pipe);
+			node->ar_pipe = NULL;
+		}
 		waitpid(node->pid, &status, 0);
     	return (WEXITSTATUS(status));
 	}
@@ -296,37 +304,43 @@ void	ana_m9wd(t_ast_node *node)
 	ana_m9wd(node->right);
 }
 
-int	execute_tree(t_ast_node *node, int fd, int outfd, int closing_pipe, char **env)
+int	execute_tree(t_ast_node *node, int fd, int outfd, int cs, char **env)
 {
-	int		pipe_arr[2];
 	int		status;
 
 	if (!node)
 		return (1);
 	if (node->type == AST_PIPE)
 	{
-		pipe(pipe_arr);
-		execute_tree(node->left, fd, pipe_arr[1], pipe_arr[0], env);
-		status = execute_tree(node->right, pipe_arr[0], outfd, pipe_arr[1], env);
-		close(pipe_arr[0]);
-		close(pipe_arr[1]);
+		node->right->ar_pipe = malloc(2 * sizeof(int));
+		// TO DO
+		pipe(node->right->ar_pipe);
+		execute_tree(node->left, fd, node->right->ar_pipe[1], node->right->ar_pipe[0], env);
+		status = execute_tree(node->right, node->right->ar_pipe[0], outfd, node->right->ar_pipe[1], env);
+		if (node->right->ar_pipe)
+		{
+			close(node->right->ar_pipe[0]);
+			close(node->right->ar_pipe[1]);
+			free(node->right->ar_pipe);
+			node->right->ar_pipe = NULL;
+		}
 	}
 	else if (node->type == AST_AND)
 	{
 		ana_m9wd(node->left);
-		status = execute_tree(node->left, fd, outfd, closing_pipe, env);
+		status = execute_tree(node->left, fd, outfd, cs, env);
 		if (!status)
-			status = execute_tree(node->right, fd, outfd, closing_pipe, env);
+			status = execute_tree(node->right, fd, outfd, cs, env);
 	}
 	else if (node->type == AST_OR)
 	{
 		ana_m9wd(node->left);
-		status = execute_tree(node->left, fd, outfd, closing_pipe, env);
+		status = execute_tree(node->left, fd, outfd, cs, env);
 		if (status)
-			status = execute_tree(node->right, fd, outfd, closing_pipe, env);
+			status = execute_tree(node->right, fd, outfd, cs, env);
 	}
 	else if (node->type == AST_CMD)
-		return (execute_command(node, fd, outfd, closing_pipe, env));
+		return (execute_command(node, fd, outfd, cs, env));
 	return (status);
 }
 
@@ -349,13 +363,16 @@ int waiting(t_ast_node *ast)
 {
     int	status;
 	
-	if (!ast->right)
-	{
-		waitpid(ast->pid, &status, 0);
-		while (wait(NULL) > 0);
-    	return (WEXITSTATUS(status));
-	}
-	waiting(ast->right);
+	while (wait(NULL) > 0);
+	// if (!ast->right)
+	// {
+	// 	// waitpid(ast->pid, &status, 0);
+	// 	while (wait(NULL) > 0);
+	// 	return (0);
+    // 	// return (WEXITSTATUS(status));
+	// }
+	// waiting(ast->right);
+	// return (0);
 	// wait(NULL);
 	// if (!ast)
     //     return ;
